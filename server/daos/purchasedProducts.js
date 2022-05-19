@@ -17,45 +17,10 @@ export const getTotalByDate = async date => {
   });
   return total || 0;
 };
-export const getTotalByDateForCategory = async (date, category) => {
-  const total = await db.purchasedProducts.sum('price', {
-    where: { createdAt: { [Op.lt]: date.endOf('day').toISOString(), [Op.gt]: date.startOf('day').toISOString() } },
-    include: [
-      {
-        model: db.products,
-        as: 'product',
-        where: {
-          category
-        },
-        required: true
-      }
-    ],
-    group: ['product.id']
-  });
-  return total || 0;
-};
 
 export const getCountByDate = async date => {
   const total = await db.purchasedProducts.count({
     where: { createdAt: { [Op.lt]: date.endOf('day').toISOString(), [Op.gt]: date.startOf('day').toISOString() } }
   });
   return total;
-};
-
-export const getCountByDateForCategory = async (date, category) => {
-  const total = await db.purchasedProducts.count({
-    where: { createdAt: { [Op.lt]: date.endOf('day').toISOString(), [Op.gt]: date.startOf('day').toISOString() } },
-    include: [
-      {
-        model: db.products,
-        as: 'product',
-        where: {
-          category
-        },
-        required: true
-      }
-    ],
-    group: ['product.id']
-  });
-  return total[0] ? Number(total[0].count) : 0;
 };
