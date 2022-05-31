@@ -1,7 +1,7 @@
 import { GraphQLFloat, GraphQLObjectType, GraphQLString } from 'graphql';
 import { GraphQLDateTime } from 'graphql-iso-date';
 import { client } from '@database';
-import { handleAggregateQueries, queryOptions, queryRedis } from './purchasedProductsUtils';
+import { handleAggregateQueries, queryOptions } from './purchasedProductsUtils';
 
 const Aggregate = new GraphQLObjectType({
   name: 'Aggregate',
@@ -12,8 +12,7 @@ const Aggregate = new GraphQLObjectType({
         fields: () => ({
           purchasedProductsPrice: {
             name: 'TotalPriceOfPurchasedProducts',
-            type: GraphQLFloat,
-            resolve: async args => queryRedis('total', args)
+            type: GraphQLFloat
           }
         })
       }),
@@ -42,8 +41,7 @@ const Aggregate = new GraphQLObjectType({
         fields: () => ({
           purchasedProducts: {
             name: 'CountOfPurchasedProducts',
-            type: GraphQLFloat,
-            resolve: async args => queryRedis('count', args)
+            type: GraphQLFloat
           }
         })
       }),
