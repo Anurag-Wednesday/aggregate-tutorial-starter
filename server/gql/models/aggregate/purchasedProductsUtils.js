@@ -1,6 +1,10 @@
 import moment from 'moment';
 import { QueryTypes } from 'sequelize';
 import { addWhereClause } from '@utils';
+import { getEarliestCreatedDate } from '@server/daos/purchasedProducts';
+import { redis } from '@services/redis';
+import { sendMessage } from '@server/services/slack';
+import { logger } from '@server/utils';
 import { TIMESTAMP } from '@utils/constants';
 
 export const handleAggregateQueries = (args, tableName) => {
@@ -28,3 +32,39 @@ export const queryOptions = args => ({
   },
   type: QueryTypes.SELECT
 });
+
+export const queryRedis = async (type, args) => {
+  let startDate;
+  let endDate;
+  let count = 0;
+  if (!args?.startDate) {
+    const createdAtDates = await getEarliestCreatedDate();
+    startDate = createdAtDates;
+  } else {
+    startDate = args.startDate.toISOString().split('T')[0];
+  }
+  if (!args?.endDate) {
+    endDate = moment().format('YYYY-MM-DD');
+  } else {
+    endDate = args.endDate.toISOString().split('T')[0];
+  }
+  const key = `${startDate}_total`;
+  // 2
+  while (startDate <= endDate) {
+    let aggregateData;
+    const totalForDate = await redis.get(key);
+    if (totalForDate) {
+      try {
+        aggregateData = JSON.parse(totalForDate);
+        count += Number(aggregateData[type]);
+      } catch (err) {
+        sendMessage(`Error while parsing data for ${key} as got value ${totalForDate}`);
+        logger().info(`Error while parsing data for ${key} as got value ${totalForDate}`);
+      }
+    }
+    startDate = moment(startDate)
+      .add(1, 'day')
+      .format('YYYY-MM-DD');
+  }
+  return count;
+};
